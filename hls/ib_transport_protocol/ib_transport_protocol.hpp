@@ -181,13 +181,14 @@ struct txMeta
 	ap_uint<24> qpn;
 	ap_uint<48> local_vaddr;
 	ap_uint<48> remote_vaddr;
+	ap_uint<16> r_key; //Writing requires an up to date remote key so the remote memory may be accessed
 	ap_uint<32> length;
 	txMeta()
 		:op_code(APP_READ) {}
-	txMeta(appOpCode op, ap_uint<24> qp, ap_uint<48> raddr, ap_uint<32> len)
-				:op_code(op), qpn(qp), local_vaddr(0), remote_vaddr(raddr), length(len){}
-	txMeta(appOpCode op, ap_uint<24> qp, ap_uint<48> laddr, ap_uint<48> raddr, ap_uint<32> len)
-			:op_code(op), qpn(qp), local_vaddr(laddr), remote_vaddr(raddr), length(len){}
+	txMeta(appOpCode op, ap_uint<24> qp, ap_uint<48> raddr, ap_uint<16> rkey, ap_uint<32> len)
+				:op_code(op), qpn(qp), local_vaddr(0), remote_vaddr(raddr), r_key(rkey), length(len){}
+	txMeta(appOpCode op, ap_uint<24> qp, ap_uint<48> laddr, ap_uint<48> raddr, ap_uint<16> rkey, ap_uint<32> len)
+			:op_code(op), qpn(qp), local_vaddr(laddr), remote_vaddr(raddr), r_key(rkey), length(len){}
 };
 
 
@@ -213,6 +214,7 @@ struct event
 	ibOpCode 	op_code;
 	ap_uint<24> qpn;
 	ap_uint<48> addr;
+	ap_uint<16> r_key; //Added for RDMA Write content
 	ap_uint<32> length;
 	ap_uint<24>	psn;
 	bool		validPsn;
@@ -225,12 +227,12 @@ struct event
 		:op_code(RC_ACK), qpn(aev.qpn), psn(aev.psn), validPsn(aev.validPsn), isNak(aev.isNak) {}
 	/*event(ibOpCode op, ap_uint<24> qp, ap_uint<24> psn, bool nak)
 		:op_code(op), qpn(qp), psn(psn), validPsn(true), isNak(nak) {}*/
-	event(ibOpCode op, ap_uint<24> qp, ap_uint<48> addr, ap_uint<32> len)
-		:op_code(op), qpn(qp), addr(addr), length(len), psn(0), validPsn(false), isNak(false) {}
+	event(ibOpCode op, ap_uint<24> qp, ap_uint<48> addr, ap_uint<16> rkey, ap_uint<32> len)
+		:op_code(op), qpn(qp), addr(addr), r_key(rkey), length(len), psn(0), validPsn(false), isNak(false) {}
 	event(ibOpCode op, ap_uint<24> qp, ap_uint<32> len, ap_uint<24> psn)
-		:op_code(op), qpn(qp), addr(0), length(len), psn(psn), validPsn(true), isNak(false) {}
-	event(ibOpCode op, ap_uint<24> qp, ap_uint<48> addr, ap_uint<32> len, ap_uint<24> psn)
-		:op_code(op), qpn(qp), addr(addr), length(len), psn(psn), validPsn(true), isNak(false) {}
+		:op_code(op), qpn(qp), addr(0),  length(len), psn(psn), validPsn(true), isNak(false) {}
+	event(ibOpCode op, ap_uint<24> qp, ap_uint<48> addr, ap_uint<16> rkey, ap_uint<32> len, ap_uint<24> psn)
+		:op_code(op), qpn(qp), addr(addr), r_key(rkey), length(len), psn(psn), validPsn(true), isNak(false) {}
 };
 
 struct retransEvent

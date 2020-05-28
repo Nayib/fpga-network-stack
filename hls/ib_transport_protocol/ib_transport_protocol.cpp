@@ -1094,7 +1094,7 @@ void generate_exh(	stream<event>&			metaIn,
 				// [BTH][RETH][PayLd]
 				rdmaHeader.setVirtualAddress(meta.addr);
 				rdmaHeader.setLength(meta.length); //TODO Move up??
-				rdmaHeader.setRemoteKey(msnMeta.r_key);
+				rdmaHeader.setRemoteKey(meta.r_key);//msnMeta.r_key
 				ap_uint<8> remainingLength = rdmaHeader.consumeWord(sendWord.data);
 				sendWord.keep = ~0;
 				sendWord.last = (remainingLength == 0);
@@ -1599,6 +1599,7 @@ void local_req_handler(	stream<txMeta>&				s_axis_tx_meta,
 	ibOpCode writeOpcode;
 	ap_uint<48> raddr;
 	ap_uint<48> laddr;
+	ap_uint<24> remote_key;
 	ap_uint<32> length;
 	ap_uint<32> dmaLength;
 
@@ -1631,16 +1632,16 @@ void local_req_handler(	stream<txMeta>&				s_axis_tx_meta,
 			{
 				if (meta.op_code == APP_READ)
 				{
-					tx_localTxMeta.write(event(RC_RDMA_READ_REQUEST, meta.qpn, meta.remote_vaddr, meta.length));
+					tx_localTxMeta.write(event(RC_RDMA_READ_REQUEST, meta.qpn, meta.remote_vaddr, meta.r_key, meta.length));
 				}
 				else if (meta.op_code == APP_READ_CONSISTENT)
 				{
-					tx_localTxMeta.write(event(RC_RDMA_READ_CONSISTENT_REQUEST, meta.qpn, meta.remote_vaddr, meta.length));
+					tx_localTxMeta.write(event(RC_RDMA_READ_CONSISTENT_REQUEST, meta.qpn, meta.remote_vaddr, meta.r_key, meta.length));
 				}
 #if POINTER_CHASING_EN
 				else
 				{
-					tx_localTxMeta.write(event(RC_RDMA_READ_POINTER_REQUEST, meta.qpn, meta.remote_vaddr, meta.length));
+					tx_localTxMeta.write(event(RC_RDMA_READ_POINTER_REQUEST, meta.qpn, meta.remote_vaddr, meta.r_key, meta.length));
 				}
 #endif
 				tx_localReadAddrFifo.write(mqInsertReq<ap_uint<64> >(meta.qpn, meta.local_vaddr));
@@ -1652,6 +1653,7 @@ void local_req_handler(	stream<txMeta>&				s_axis_tx_meta,
 			{
 				laddr = meta.local_vaddr;
 				raddr = meta.remote_vaddr;
+				remote_key  = meta.r_key;
 				dmaLength = meta.length;
 				writeOpcode = (meta.op_code == APP_PART) ? RC_RDMA_PART_ONLY : RC_RDMA_WRITE_ONLY;
 
@@ -1674,7 +1676,7 @@ void local_req_handler(	stream<txMeta>&				s_axis_tx_meta,
 					tx_local_memCmdFifo.write(memCmdInternal(meta.qpn, laddr, dmaLength));
 				}
 				//event needs to contain QP, opCode, length, psn
-				tx_localTxMeta.write(event(writeOpcode, meta.qpn, raddr, dmaLength));
+				tx_localTxMeta.write(event(writeOpcode, meta.qpn, raddr, meta.r_key, dmaLength));
 #if RETRANS_EN
 				tx2retrans_insertAddrLen.write(retransAddrLen(laddr, raddr, dmaLength));
 #endif
@@ -1699,7 +1701,7 @@ void local_req_handler(	stream<txMeta>&				s_axis_tx_meta,
 			lrh_state = META;
 		}
 		//tx_local_memCmdFifo.write(memCmdInternal(meta.qpn, laddr, length, (writeOpcode == RC_RDMA_WRITE_LAST || writeOpcode == RC_RDMA_PART_LAST)));
-		tx_localTxMeta.write(event(writeOpcode, meta.qpn, raddr, length));
+		tx_localTxMeta.write(event(writeOpcode, meta.qpn, meta.r_key, raddr, length));
 #if RETRANS_EN
 		tx2retrans_insertAddrLen.write(retransAddrLen(laddr, raddr, length));
 #endif
