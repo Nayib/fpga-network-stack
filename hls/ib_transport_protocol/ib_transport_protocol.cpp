@@ -1892,8 +1892,15 @@ void qp_interface(	stream<qpContext>& 			contextIn,
 		{
 			stateTable2qpi_rsp.read(state);
 			//TODO check if valid transition
-			qpi2stateTable_upd_req.write(ifStateReq(context.qp_num, context.newState, context.remote_psn, context.local_psn));
-			if2msnTable_init.write(ifMsnReq(context.qp_num, context.r_key)); //TODO store virtual address somewhere??
+			
+			if (context.remote_psn == 0)
+			{
+			  if2msnTable_init.write(ifMsnReq(context.qp_num, context.r_key)); //TODO store virtual address somewhere??
+			} 
+			else 
+			{
+			  qpi2stateTable_upd_req.write(ifStateReq(context.qp_num, context.newState, context.remote_psn, context.local_psn));	
+		    }
 			qp_fsmState = GET_STATE;
 		}
 		break;

@@ -30,7 +30,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../axi_utils.hpp"
 using namespace hls;
-
+#define RETRANS_EN 1
 struct txReadReqUpdate
 {
 	ap_uint<16> qpn;
