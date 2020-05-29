@@ -1599,7 +1599,7 @@ void local_req_handler(	stream<txMeta>&				s_axis_tx_meta,
 	ibOpCode writeOpcode;
 	ap_uint<48> raddr;
 	ap_uint<48> laddr;
-	ap_uint<24> remote_key;
+	ap_uint<32> remote_key;
 	ap_uint<32> length;
 	ap_uint<32> dmaLength;
 
