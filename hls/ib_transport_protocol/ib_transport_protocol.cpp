@@ -751,6 +751,9 @@ void rx_exh_fsm(	stream<ibhMeta>&				metaIn,
 			rx_pkgSplitTypeFifo.write(pkgSplitType(meta.op_code));
 			pe_fsmState = META;
 			break;
+		case RC_SEND: 
+		  rx_exhEventMetaFifo.write(ackEvent(meta.dest_qp));
+		  break;
 		case RC_ACK:
 		{
 			// [BTH][AETH]
